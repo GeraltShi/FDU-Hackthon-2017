@@ -61,20 +61,15 @@ def detec(text):  # detec the id of player
     for word in words:
         if word in dict: return dict[word]
 
-def trans(id):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # ipv4,udp
-    sock.bind(('127.0.0.1', 54377))  # UDP服务器端口和IP绑定
+def trans(id, sock):
     buf, addr = sock.recvfrom(40960)  # 等待matlab发送请求，这样就能获取matlab client的ip和端口号
-    print(addr)
+    # print(addr)
 
     s = str(id)  # 将数据转化为String
     sock.sendto(bytes(s, encoding="utf8"), addr)  # 将数据转为bytes发送给matlab的client
-    print(s)
     time.sleep(1)
 
-    sock.close()
-
-def get_speeches(i):  # get speeched to text
+def get_speeches(i, sock):  # get speeched to text
 
     path = './' + str(i) + '.wav'
 
@@ -92,13 +87,18 @@ def get_speeches(i):  # get speeched to text
     print(text)
     # text = 'Number seven , He got it !'
     id = detec(text)
-    trans(id)
+    trans(id, sock)
 
     return text, id
 
 if __name__ == '__main__' :
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # ipv4,udp
+    sock.bind(('127.0.0.1', 54377))  # UDP服务器端口和IP绑定
+
     for i in range(1, 3):
         record(i)
 
-        p = multiprocessing.Process(target=get_speeches, args=(i,))  # 用子进程保证录音的连续性
+        p = multiprocessing.Process(target=get_speeches, args=(i,sock,))  # 用子进程保证录音的连续性
         p.start()
+
+    sock.close()
