@@ -12,10 +12,14 @@ import pyaudio
 import time
 import wave
 import multiprocessing
-from multiprocessing import Pool
+
+def print_ts(message):  # print headlines
+    print("[%s] %s"%(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), message))
 
 # PyAudio example: Record a few seconds of audio and save to a WAVE file
-def record(path):
+def record(i):
+    path = './' + str(i) + '.wav'
+
     CHUNK = 1024
     FORMAT = pyaudio.paInt16
     CHANNELS = 2
@@ -38,6 +42,7 @@ def record(path):
         frames.append(data)
 
     print("* done recording")
+
     stream.stop_stream()
     stream.close()
     p.terminate()
@@ -54,10 +59,10 @@ def detec(text):  # detec the id of player
     for word in words:
         if word in dict: return dict[word]
 
-def print_ts(message):  # print headlines
-    print("[%s] %s"%(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), message))
+def get_speeches(i):  # get speeched to text
 
-def get_speeches(path):  # get speeched to text
+    path = './' + str(i) + '.wav'
+
     cmd = 'curl -X POST -u 810e0500-12e4-4ed8-a1ac-4706ae4858d1:IjZZ80MAGJlY \
     --header "Content-Type: audio/wav" \
     --header "Transfer-Encoding: chunked" \
@@ -74,12 +79,14 @@ def get_speeches(path):  # get speeched to text
     id = detec(text)
     return text, id
 
-def main_loop(i):
-     path = './' + str(i) + '.wav'
-     record(path)
-     get_speeches(path)
-
+# def main_loop(i):
+#      path = './' + str(i) + '.wav'
+#      record(path)
+#      get_speeches(path)
 
 if __name__ == '__main__' :
-  for i in range(1, 6):
-    main_loop(i)
+    for i in range(1, 3):
+        record(i)
+
+        p = multiprocessing.Process(target=get_speeches, args=(i,))
+        p.start()
